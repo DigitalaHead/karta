@@ -1,0 +1,1889 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Навигатор ИжГТУ</title>
+    <style>
+        :root {
+            --primary-color: #0078d7;
+            --danger-color: #d70000;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --route-color: #9c27b0;
+            --sidebar-width: 60px;
+            --corpus-sidebar-width: 80px;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            display: flex;
+            min-height: 100vh;
+            background-color: white;
+            text-align: center;
+            overflow-x: hidden;
+        }
+        
+        /* Левая панель для корпусов */
+        .corpus-sidebar {
+            width: var(--corpus-sidebar-width);
+            background-color: #f8f9fa;
+            border-right: 1px solid #ddd;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px 0;
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+        
+        .corpus-sidebar button {
+            margin: 6px 0;
+            width: 50px;
+            height: 50px;
+            font-size: 16px;
+            cursor: pointer;
+            border: 2px solid #ccc;
+            background-color: white;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .corpus-sidebar button:hover {
+            background-color: #e9ecef;
+            border-color: #0078d7;
+        }
+        
+        .corpus-sidebar button.active {
+            background-color: #0078d7;
+            color: white;
+            border-color: #005a9e;
+            transform: scale(1.05);
+        }
+        
+        .corpus-sidebar .corpus-label {
+            font-size: 10px;
+            margin-top: 4px;
+            color: #666;
+        }
+        
+        /* Иконки управления */
+        .control-icons {
+            position: fixed;
+            top: 20px;
+            left: calc(var(--corpus-sidebar-width) + 20px);
+            display: flex;
+            gap: 10px;
+            z-index: 2000;
+        }
+        
+        .control-icon {
+            width: 90px;
+            height: 40px;
+            cursor: pointer;
+            background-color: var(--primary-color);
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+        
+        .control-icon:hover {
+            background-color: #005a9e;
+            transform: translateY(-2px);
+        }
+        
+        .control-icon span {
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        
+        .control-icon.route-mode {
+            background-color: var(--route-color);
+        }
+        
+        .control-icon.route-mode:hover {
+            background-color: #7b1fa2;
+        }
+        
+        /* Правая панель для этажей */
+        .floor-sidebar {
+            width: var(--sidebar-width);
+            background-color: #f0f0f0;
+            border-left: 1px solid #ccc;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px 0;
+            position: fixed;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+        
+        .floor-sidebar button {
+            margin: 5px 0;
+            width: 40px;
+            height: 40px;
+            font-size: 16px;
+            cursor: pointer;
+            border: 1px solid #999;
+            background-color: white;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+        
+        .floor-sidebar button:hover, .floor-sidebar button.active {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: #005a9e;
+        }
+        
+        /* Основной контент */
+        .content {
+            flex-grow: 1;
+            padding: 80px 20px 20px 20px;
+            margin-left: var(--corpus-sidebar-width);
+            margin-right: var(--sidebar-width);
+            position: relative;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            min-height: 100vh;
+            width: calc(100% - var(--corpus-sidebar-width) - var(--sidebar-width));
+        }
+        
+        h1 {
+            margin-top: 0;
+            text-align: center;
+            width: 100%;
+            font-size: 28px;
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+        
+        .corpus-info {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 30px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            display: inline-block;
+        }
+        
+        img {
+            display: block;
+            margin: 20px auto;
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        #top-right-logo {
+            position: absolute;
+            top: 10px;
+            right: calc(var(--sidebar-width) + 10px);
+            width: 100px;
+            height: 100px;
+            object-fit: contain;
+            display: block;
+            z-index: 10;
+        }
+        
+        .content #page-image {
+            margin-bottom: 40px;
+            max-width: 90%;
+        }
+        
+        .image-container {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+            text-align: center;
+            max-width: 900px;
+        }
+        
+        .object-label {
+            position: absolute;
+            background: rgba(255,255,255,0.95);
+            border: 2px solid var(--primary-color);
+            border-radius: 6px;
+            padding: 6px 12px;
+            font-size: 14px;
+            color: var(--primary-color);
+            pointer-events: none;
+            white-space: nowrap;
+            transform: translate(-50%, -100%);
+            z-index: 100;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+            font-weight: 500;
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .object-label.delete-mode {
+            cursor: pointer;
+            background: #ffcccc;
+            border-color: var(--danger-color);
+            pointer-events: auto;
+        }
+        
+        .object-label.route-mode {
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.98);
+            border-color: var(--route-color);
+            pointer-events: auto;
+            z-index: 200;
+        }
+        
+        .object-label.route-mode:hover {
+            background: #f3e5f5;
+            transform: translate(-50%, -100%) scale(1.05);
+        }
+        
+        .object-label.route-start {
+            border-color: var(--success-color);
+            background: rgba(40, 167, 69, 0.1);
+        }
+        
+        .object-label.route-end {
+            border-color: var(--warning-color);
+            background: rgba(255, 193, 7, 0.1);
+        }
+        
+        .object-label.route-point {
+            border-color: #673ab7;
+            background: rgba(103, 58, 183, 0.1);
+        }
+        
+        #page-image.add-object-cursor {
+            cursor: crosshair;
+        }
+        
+        #page-image.route-mode-cursor {
+            cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="%239C27B0" d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z"/></svg>') 12 23, pointer;
+        }
+        
+        .edit-panel {
+            margin-top: 30px;
+            border-top: 2px solid #eee;
+            padding-top: 20px;
+            text-align: center;
+            width: 100%;
+            max-width: 600px;
+        }
+        
+        .edit-buttons-container {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .add-object-btn {
+            padding: 10px 20px;
+            font-size: 14px;
+            background: var(--primary-color);
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+        
+        .add-object-btn:hover {
+            background: #005a9e;
+            transform: translateY(-2px);
+        }
+        
+        .add-object-btn.active {
+            background: #005a9e;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        
+        .delete-object-btn {
+            padding: 10px 20px;
+            font-size: 14px;
+            background: var(--danger-color);
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+        
+        .delete-object-btn:hover {
+            background: #a00000;
+            transform: translateY(-2px);
+        }
+        
+        .delete-object-btn.active {
+            background: #a00000;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        
+        .message {
+            padding: 12px;
+            margin: 15px 0;
+            border-radius: 6px;
+            background: #e7f3ff;
+            border: 1px solid var(--primary-color);
+            text-align: center;
+            width: 100%;
+            max-width: 600px;
+        }
+        
+        .save-file-btn {
+            padding: 10px 20px;
+            font-size: 14px;
+            background: var(--success-color);
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+        
+        .save-file-btn:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+        
+        #page-text {
+            text-align: center;
+            width: 100%;
+            font-size: 20px;
+            font-weight: bold;
+            margin: 20px 0;
+            color: #2c3e50;
+        }
+        
+        .loader {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid var(--primary-color);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 2s linear infinite;
+            margin: 40px auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .debug-info {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 15px 0;
+            font-family: monospace;
+            font-size: 12px;
+            text-align: left;
+            max-width: 600px;
+            width: 100%;
+        }
+        
+        /* Модальные окна */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 3000;
+            left: 0; top: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            min-width: 300px;
+            max-width: 90vw;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            position: relative;
+            text-align: left;
+        }
+        
+        .modal-close {
+            position: absolute;
+            top: 15px; right: 20px;
+            font-size: 28px;
+            color: #888;
+            cursor: pointer;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .search-results, .quick-access-list, .route-instructions {
+            margin-top: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .search-results li, .quick-access-list li, .route-instructions li {
+            margin-bottom: 10px;
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            border-radius: 6px;
+            transition: background-color 0.2s;
+        }
+        
+        .search-results li:hover, .quick-access-list li:hover {
+            background-color: #f5f5f5;
+        }
+        
+        .route-instructions {
+            background: #f9f0ff;
+            border: 1px solid #e1bee7;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: left;
+            margin-top: 20px;
+            max-height: 200px;
+        }
+        
+        .route-step {
+            margin-bottom: 10px;
+            padding: 8px;
+            border-left: 3px solid var(--route-color);
+            background: white;
+        }
+        
+        .route-step.current {
+            background: #f3e5f5;
+            font-weight: bold;
+        }
+        
+        .route-controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            justify-content: center;
+        }
+        
+        .route-btn {
+            padding: 8px 16px;
+            background: var(--route-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .route-btn:hover {
+            background: #7b1fa2;
+        }
+        
+        .route-btn.cancel {
+            background: #6c757d;
+        }
+        
+        .route-btn.cancel:hover {
+            background: #5a6268;
+        }
+        
+        /* Панель быстрого доступа */
+        .quick-access-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .quick-access-actions {
+            display: flex;
+            gap: 5px;
+        }
+        
+        .quick-access-btn {
+            padding: 4px 8px;
+            font-size: 12px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        
+        .quick-access-btn.go {
+            background: var(--primary-color);
+            color: white;
+        }
+        
+        .quick-access-btn.remove {
+            background: #dc3545;
+            color: white;
+        }
+        
+        /* Стили для маршрута */
+        .route-line {
+            position: absolute;
+            background: var(--route-color);
+            height: 3px;
+            transform-origin: 0 0;
+            z-index: 90;
+            pointer-events: none;
+        }
+        
+        .route-point {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: var(--route-color);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 95;
+            pointer-events: none;
+        }
+        
+        /* Адаптация для телефона */
+        @media (max-width: 768px) {
+            :root {
+                --sidebar-width: 50px;
+                --corpus-sidebar-width: 60px;
+            }
+            
+            body {
+                flex-direction: column;
+            }
+            
+            .corpus-sidebar {
+                width: 100%;
+                height: 70px;
+                flex-direction: row;
+                justify-content: center;
+                border-right: none;
+                border-bottom: 1px solid #ddd;
+                padding: 5px;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                overflow-x: auto;
+            }
+            
+            .corpus-sidebar button {
+                margin: 0 5px;
+                width: 45px;
+                height: 45px;
+                font-size: 14px;
+            }
+            
+            .corpus-sidebar .corpus-label {
+                display: none;
+            }
+            
+            .floor-sidebar {
+                width: 100%;
+                height: 50px;
+                flex-direction: row;
+                justify-content: center;
+                border-left: none;
+                border-top: 1px solid #ccc;
+                padding: 5px;
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                top: auto;
+            }
+            
+            .floor-sidebar button {
+                margin: 0 3px;
+                width: 35px;
+                height: 35px;
+                font-size: 14px;
+            }
+            
+            .content {
+                margin: 70px 0 50px 0;
+                padding: 120px 10px 20px 10px;
+                width: 100%;
+            }
+            
+            .control-icons {
+                top: 75px;
+                left: 50%;
+                transform: translateX(-50%);
+                width: 100%;
+                justify-content: center;
+                flex-wrap: wrap;
+                gap: 5px;
+            }
+            
+            .control-icon {
+                width: 80px;
+                height: 35px;
+            }
+            
+            #top-right-logo {
+                position: fixed;
+                top: 10px;
+                right: 10px;
+                width: 60px;
+                height: 60px;
+                z-index: 1000;
+            }
+            
+            h1 {
+                font-size: 22px;
+                margin-top: 40px;
+            }
+            
+            .corpus-info {
+                font-size: 14px;
+                margin-bottom: 15px;
+            }
+            
+            .content #page-image {
+                margin-bottom: 20px;
+                max-width: 100%;
+            }
+            
+            .object-label {
+                font-size: 12px;
+                padding: 4px 8px;
+                max-width: 150px;
+            }
+            
+            .edit-buttons-container {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .add-object-btn,
+            .delete-object-btn,
+            .save-file-btn {
+                width: 100%;
+                max-width: 280px;
+                margin: 5px 0;
+            }
+            
+            #page-text {
+                font-size: 18px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 20px;
+                margin-top: 60px;
+            }
+            
+            .content {
+                padding: 130px 5px 20px 5px;
+            }
+            
+            .control-icon {
+                width: 70px;
+                height: 30px;
+            }
+            
+            .control-icon span {
+                font-size: 12px;
+            }
+            
+            .modal-content {
+                padding: 20px 15px;
+                width: 95vw;
+            }
+            
+            .object-label {
+                font-size: 10px;
+                padding: 3px 6px;
+            }
+        }
+        
+        /* Для очень маленьких экранов */
+        @media (max-width: 360px) {
+            .corpus-sidebar button {
+                width: 40px;
+                height: 40px;
+                margin: 0 3px;
+                font-size: 12px;
+            }
+            
+            .floor-sidebar button {
+                width: 30px;
+                height: 30px;
+                margin: 0 2px;
+                font-size: 12px;
+            }
+            
+            .control-icon {
+                width: 60px;
+                height: 28px;
+            }
+            
+            .control-icon span {
+                font-size: 11px;
+            }
+            
+            h1 {
+                font-size: 18px;
+            }
+            
+            #page-text {
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Левая панель для корпусов -->
+    <div class="corpus-sidebar" id="corpusSidebar">
+        <button data-corpus="1" class="corpus-btn" title="Корпус 1">
+            1
+            <div class="corpus-label">Корп.</div>
+        </button>
+        <button data-corpus="2" class="corpus-btn" title="Корпус 2">
+            2
+            <div class="corpus-label">Корп.</div>
+        </button>
+        <button data-corpus="3" class="corpus-btn active" title="Корпус 3">
+            3
+            <div class="corpus-label">Корп.</div>
+        </button>
+        <button data-corpus="4" class="corpus-btn" title="Корпус 4">
+            4
+            <div class="corpus-label">Корп.</div>
+        </button>
+        <button data-corpus="5" class="corpus-btn" title="Корпус 5">
+            5
+            <div class="corpus-label">Корп.</div>
+        </button>
+        <button data-corpus="6" class="corpus-btn" title="Корпус 6">
+            6
+            <div class="corpus-label">Корп.</div>
+        </button>
+        <button data-corpus="7" class="corpus-btn" title="Корпус 7">
+            7
+            <div class="corpus-label">Корп.</div>
+        </button>
+        <button data-corpus="8" class="corpus-btn" title="Корпус 8">
+            8
+            <div class="corpus-label">Корп.</div>
+        </button>
+        <button data-corpus="9" class="corpus-btn" title="Корпус 9">
+            9
+            <div class="corpus-label">Корп.</div>
+        </button>
+    </div>
+
+    <!-- Иконки управления -->
+    <div class="control-icons">
+        <div class="control-icon" id="searchIcon" title="Поиск по объектам">
+            <span>Поиск</span>
+        </div>
+        <div class="control-icon" id="quickAccessIcon" title="Быстрый доступ">
+            <span>Избранное</span>
+        </div>
+        <div class="control-icon" id="routeIcon" title="Построить маршрут">
+            <span>Маршрут</span>
+        </div>
+    </div>
+
+    <!-- Модальное окно поиска -->
+    <div class="modal" id="searchModal">
+        <div class="modal-content">
+            <span class="modal-close" id="closeSearchModal">&times;</span>
+            <h2>Поиск по объектам</h2>
+            <input type="text" id="searchInput" placeholder="Введите название объекта..." 
+                   style="width:100%;padding:12px;font-size:16px;border:2px solid #ddd;border-radius:6px;margin-top:10px;">
+            <ul class="search-results" id="searchResults"></ul>
+        </div>
+    </div>
+
+    <!-- Модальное окно быстрого доступа -->
+    <div class="modal" id="quickAccessModal">
+        <div class="modal-content">
+            <span class="modal-close" id="closeQuickAccessModal">&times;</span>
+            <h2>Быстрый доступ</h2>
+            <p style="color:#666;font-size:14px;margin-bottom:15px;">Добавляйте сюда часто посещаемые объекты для быстрого перехода</p>
+            <ul class="quick-access-list" id="quickAccessList"></ul>
+            <div style="margin-top:20px;padding-top:15px;border-top:1px solid #eee;">
+                <p style="color:#666;font-size:14px;">Для добавления объекта в список быстрого доступа нажмите на него правой кнопкой мыши в режиме просмотра</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно построения маршрута -->
+    <div class="modal" id="routeModal">
+        <div class="modal-content">
+            <span class="modal-close" id="closeRouteModal">&times;</span>
+            <h2>Построение маршрута</h2>
+            <div id="routeStatus" style="padding:15px;background:#f0f8ff;border-radius:6px;margin:15px 0;">
+                <strong>Статус:</strong> <span id="routeStatusText">Выберите начальную точку</span>
+            </div>
+            
+            <div id="routeStartInfo" style="display:none;">
+                <p><strong>Начало:</strong> <span id="routeStartName"></span></p>
+            </div>
+            
+            <div id="routeEndInfo" style="display:none;">
+                <p><strong>Конец:</strong> <span id="routeEndName"></span></p>
+            </div>
+            
+            <div id="routeSteps" class="route-instructions" style="display:none;">
+                <h3>Маршрут:</h3>
+                <ol id="routeStepsList"></ol>
+            </div>
+            
+            <div class="route-controls">
+                <button class="route-btn cancel" id="cancelRouteBtn">Отмена</button>
+                <button class="route-btn" id="startRouteBtn" style="display:none;">Начать маршрут</button>
+                <button class="route-btn" id="clearRouteBtn" style="display:none;">Очистить маршрут</button>
+                <button class="route-btn" id="nextStepBtn" style="display:none;">Следующий шаг</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Основной контент -->
+    <div class="content" id="content">
+        <h1 id="page-title">Карта третьего корпуса ИжГТУ</h1>
+        <div class="corpus-info" id="corpusInfo"></div>
+        
+        <div id="loader" class="loader" style="display: none;"></div>
+        
+        <div class="image-container" id="imageContainer">
+            <img src="images/tech.jpg" alt="План этажа" id="page-image" />
+        </div>
+        
+        <img src="images/logo.jpg" alt="Логотип ИжГТУ" id="top-right-logo" />
+        
+        <p id="page-text">Загрузка...</p>
+
+        <!-- Отладочная информация -->
+        <div class="debug-info" id="debugInfo" style="display: none;"></div>
+
+        <!-- Панель редактирования только для админа -->
+        <div class="edit-panel" id="editPanel" style="display:none;">
+            <div class="message" id="editMessage" style="display:none;"></div>
+            <div class="edit-buttons-container">
+                <button class="add-object-btn" id="addObjectBtn">Добавить объект на фото</button>
+                <button class="delete-object-btn" id="deleteObjectBtn">Удалить объект</button>
+                <button class="save-file-btn" id="saveFileBtn">Сохранить в data.json</button>
+                <button class="save-file-btn" id="refreshDataBtn" style="background: #6c757d;">Обновить данные</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Правая панель для этажей -->
+    <div class="floor-sidebar" id="floorSidebar">
+        <button class="active" data-floor="1">1</button>
+        <button data-floor="2">2</button>
+        <button data-floor="3">3</button>
+        <button data-floor="4">4</button>
+        <button data-floor="5">5</button>
+        <button data-floor="6">6</button>
+        <button data-floor="7">7</button>
+        <button data-floor="8">8</button>
+        <button data-floor="9">9</button>
+    </div>
+
+    <script>
+        // --- Настройка режима администратора ---
+        const isAdmin = true;
+
+        // --- DOM элементы ---
+        const content = document.getElementById('content');
+        const pageTitle = document.getElementById('page-title');
+        const corpusInfo = document.getElementById('corpusInfo');
+        const pageImage = document.getElementById('page-image');
+        const pageText = document.getElementById('page-text');
+        const topRightLogo = document.getElementById('top-right-logo');
+        const corpusButtons = document.querySelectorAll('.corpus-btn');
+        const floorButtons = document.querySelectorAll('.floor-sidebar button');
+        const editPanel = document.getElementById('editPanel');
+        const addObjectBtn = document.getElementById('addObjectBtn');
+        const deleteObjectBtn = document.getElementById('deleteObjectBtn');
+        const saveFileBtn = document.getElementById('saveFileBtn');
+        const refreshDataBtn = document.getElementById('refreshDataBtn');
+        const searchIcon = document.getElementById('searchIcon');
+        const quickAccessIcon = document.getElementById('quickAccessIcon');
+        const routeIcon = document.getElementById('routeIcon');
+        const searchModal = document.getElementById('searchModal');
+        const quickAccessModal = document.getElementById('quickAccessModal');
+        const routeModal = document.getElementById('routeModal');
+        const closeSearchModal = document.getElementById('closeSearchModal');
+        const closeQuickAccessModal = document.getElementById('closeQuickAccessModal');
+        const closeRouteModal = document.getElementById('closeRouteModal');
+        const searchInput = document.getElementById('searchInput');
+        const searchResults = document.getElementById('searchResults');
+        const quickAccessList = document.getElementById('quickAccessList');
+        const imageContainer = document.getElementById('imageContainer');
+        const editMessage = document.getElementById('editMessage');
+        const loader = document.getElementById('loader');
+        const debugInfo = document.getElementById('debugInfo');
+        const routeStatusText = document.getElementById('routeStatusText');
+        const routeStartInfo = document.getElementById('routeStartInfo');
+        const routeEndInfo = document.getElementById('routeEndInfo');
+        const routeStartName = document.getElementById('routeStartName');
+        const routeEndName = document.getElementById('routeEndName');
+        const routeSteps = document.getElementById('routeSteps');
+        const routeStepsList = document.getElementById('routeStepsList');
+        const cancelRouteBtn = document.getElementById('cancelRouteBtn');
+        const startRouteBtn = document.getElementById('startRouteBtn');
+        const clearRouteBtn = document.getElementById('clearRouteBtn');
+        const nextStepBtn = document.getElementById('nextStepBtn');
+
+        // --- Константы ---
+        const DATA_FILE = './data.json';
+        const QUICK_ACCESS_KEY = 'izhgtu_navigator_quick_access';
+
+        // --- Структура данных корпусов ---
+        const corpusInfoData = {
+            "1": { name: "Корпус 1", description: "" },
+            "2": { name: "Корпус 2", description: "" },
+            "3": { name: "Корпус 3", description: "" },
+            "4": { name: "Корпус 4", description: "" },
+            "5": { name: "Корпус 5", description: "" },
+            "6": { name: "Корпус 6", description: "" },
+            "7": { name: "Корпус 7", description: "" },
+            "8": { name: "Корпус 8", description: "" },
+            "9": { name: "Корпус 9", description: "" }
+        };
+
+        // --- Инициализация данных по умолчанию ---
+        // ИЗМЕНЕНИЕ: Для всех этажей 3-го корпуса используем oneNOtext.jpg
+        const defaultPagesData = {
+            "1": { "text": "Этаж 1", "imageSrc": "images/oneNOtext.jpg", "objects": [] },
+            "2": { "text": "Этаж 2", "imageSrc": "images/oneNOtext.jpg", "objects": [] },
+            "3": { "text": "Этаж 3", "imageSrc": "images/oneNOtext.jpg", "objects": [] },
+            "4": { "text": "Этаж 4", "imageSrc": "images/oneNOtext.jpg", "objects": [] },
+            "5": { "text": "Этаж 5", "imageSrc": "images/oneNOtext.jpg", "objects": [] },
+            "6": { "text": "Этаж 6", "imageSrc": "images/oneNOtext.jpg", "objects": [] },
+            "7": { "text": "Этаж 7", "imageSrc": "images/oneNOtext.jpg", "objects": [] },
+            "8": { "text": "Этаж 8", "imageSrc": "images/oneNOtext.jpg", "objects": [] },
+            "9": { "text": "Этаж 9", "imageSrc": "images/oneNOtext.jpg", "objects": [] }
+        };
+
+        // Глобальные переменные
+        let pagesData = null;
+        let currentCorpus = 3; // По умолчанию 3 корпус
+        let currentFloor = 1;
+        let addObjectMode = false;
+        let deleteObjectMode = false;
+        let routeMode = false;
+        let routeStart = null;
+        let routeEnd = null;
+        let currentRoute = null;
+        let currentStepIndex = 0;
+        let quickAccessItems = [];
+
+        // --- Функция показа сообщения ---
+        function showMessage(text, type = 'info') {
+            editMessage.textContent = text;
+            editMessage.style.display = 'block';
+            editMessage.style.background = type === 'error' ? '#ffe6e6' : '#e7f3ff';
+            editMessage.style.borderColor = type === 'error' ? '#d70000' : '#0078d7';
+            setTimeout(() => {
+                editMessage.style.display = 'none';
+            }, 5000);
+        }
+
+        // --- Функция загрузки быстрого доступа из localStorage ---
+        function loadQuickAccess() {
+            const saved = localStorage.getItem(QUICK_ACCESS_KEY);
+            if (saved) {
+                try {
+                    quickAccessItems = JSON.parse(saved);
+                } catch (e) {
+                    console.error('Ошибка загрузки быстрого доступа:', e);
+                    quickAccessItems = [];
+                }
+            }
+            renderQuickAccessList();
+        }
+
+        // --- Функция сохранения быстрого доступа в localStorage ---
+        function saveQuickAccess() {
+            localStorage.setItem(QUICK_ACCESS_KEY, JSON.stringify(quickAccessItems));
+        }
+
+        // --- Функция отрисовки списка быстрого доступа ---
+        function renderQuickAccessList() {
+            quickAccessList.innerHTML = '';
+            
+            if (quickAccessItems.length === 0) {
+                const li = document.createElement('li');
+                li.textContent = 'Список быстрого доступа пуст';
+                li.style.color = '#888';
+                li.style.textAlign = 'center';
+                li.style.padding = '20px';
+                quickAccessList.appendChild(li);
+                return;
+            }
+            
+            quickAccessItems.forEach((item, index) => {
+                const li = document.createElement('li');
+                li.className = 'quick-access-item';
+                li.innerHTML = `
+                    <div>
+                        <strong>${item.name}</strong><br>
+                        <small>Корпус ${item.corpus}, Этаж ${item.floor}</small>
+                    </div>
+                    <div class="quick-access-actions">
+                        <button class="quick-access-btn go" data-index="${index}">Перейти</button>
+                        <button class="quick-access-btn remove" data-index="${index}">Удалить</button>
+                    </div>
+                `;
+                quickAccessList.appendChild(li);
+            });
+            
+            // Добавляем обработчики для кнопок
+            document.querySelectorAll('.quick-access-btn.go').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const index = parseInt(this.dataset.index);
+                    const item = quickAccessItems[index];
+                    loadPage(item.corpus, item.floor);
+                    quickAccessModal.classList.remove('active');
+                    // Подсвечиваем объект
+                    setTimeout(() => {
+                        highlightObject(item.name);
+                    }, 300);
+                });
+            });
+            
+            document.querySelectorAll('.quick-access-btn.remove').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const index = parseInt(this.dataset.index);
+                    const item = quickAccessItems[index];
+                    if (confirm(`Удалить "${item.name}" из быстрого доступа?`)) {
+                        quickAccessItems.splice(index, 1);
+                        saveQuickAccess();
+                        renderQuickAccessList();
+                    }
+                });
+            });
+        }
+
+        // --- Функция добавления объекта в быстрый доступ ---
+        function addToQuickAccess(objectName, corpus, floor) {
+            // Проверяем, нет ли уже такого объекта
+            const exists = quickAccessItems.some(item => 
+                item.name === objectName && item.corpus === corpus && item.floor === floor
+            );
+            
+            if (exists) {
+                showMessage('Этот объект уже есть в быстром доступе', 'info');
+                return;
+            }
+            
+            quickAccessItems.push({
+                name: objectName,
+                corpus: corpus,
+                floor: floor,
+                dateAdded: new Date().toISOString()
+            });
+            
+            saveQuickAccess();
+            renderQuickAccessList();
+            showMessage(`"${objectName}" добавлен в быстрый доступ`);
+        }
+
+        // --- Функция отрисовки объектов на фото ---
+        function renderObjects() {
+            const oldLabels = content.querySelectorAll('.object-label');
+            oldLabels.forEach(label => label.remove());
+            
+            // Удаляем старые линии маршрута
+            const oldLines = content.querySelectorAll('.route-line, .route-point');
+            oldLines.forEach(line => line.remove());
+
+            // Для корпусов кроме 3-го всегда пустые объекты
+            if (currentCorpus !== 3) {
+                return;
+            }
+
+            if (!pagesData || !pagesData[currentFloor]) {
+                return;
+            }
+
+            const objects = pagesData[currentFloor].objects || [];
+            
+            objects.forEach((obj, index) => {
+                const label = document.createElement('div');
+                label.className = 'object-label';
+                label.textContent = obj.name;
+                label.style.left = (obj.x * 100) + '%';
+                label.style.top = (obj.y * 100) + '%';
+                label.title = obj.name + ' (клик для выбора)';
+                label.dataset.objectId = index;
+                label.dataset.objectName = obj.name;
+
+                // Если объект - часть текущего маршрута
+                if (currentRoute && currentRoute.steps) {
+                    const step = currentRoute.steps.find(s => 
+                        s.objectName === obj.name && s.floor === currentFloor && s.corpus === currentCorpus
+                    );
+                    
+                    if (step) {
+                        if (step.stepIndex === currentStepIndex) {
+                            label.classList.add('route-point', 'current');
+                        } else if (step.type === 'start') {
+                            label.classList.add('route-start');
+                        } else if (step.type === 'end') {
+                            label.classList.add('route-end');
+                        } else {
+                            label.classList.add('route-point');
+                        }
+                    }
+                }
+
+                if (isAdmin && deleteObjectMode && currentCorpus === 3) {
+                    label.classList.add('delete-mode');
+                    label.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        const objectIndex = parseInt(this.dataset.objectId);
+                        if (confirm(`Удалить объект "${obj.name}"?`)) {
+                            pagesData[currentFloor].objects.splice(objectIndex, 1);
+                            renderObjects();
+                            showMessage(`Объект "${obj.name}" удален`);
+                        }
+                    });
+                } else if (routeMode) {
+                    label.classList.add('route-mode');
+                    label.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        handleObjectClickForRoute(obj.name, currentCorpus, currentFloor, obj.x, obj.y);
+                    });
+                } else {
+                    // Для обычного режима - правый клик для добавления в быстрый доступ
+                    label.addEventListener('contextmenu', function(e) {
+                        e.preventDefault();
+                        if (confirm(`Добавить "${obj.name}" в быстрый доступ?`)) {
+                            addToQuickAccess(obj.name, currentCorpus, currentFloor);
+                        }
+                        return false;
+                    });
+                }
+                
+                imageContainer.appendChild(label);
+            });
+
+            // Рисуем линии маршрута, если есть текущий маршрут и мы на нужном этаже
+            if (currentRoute && currentRoute.steps) {
+                drawRouteLines();
+            }
+        }
+
+        // --- Функция рисования линий маршрута ---
+        function drawRouteLines() {
+            const currentSteps = currentRoute.steps.filter(step => 
+                step.floor === currentFloor && step.corpus === currentCorpus
+            );
+            
+            if (currentSteps.length < 2) return;
+            
+            const imageRect = pageImage.getBoundingClientRect();
+            const containerRect = imageContainer.getBoundingClientRect();
+            
+            for (let i = 0; i < currentSteps.length - 1; i++) {
+                const step1 = currentSteps[i];
+                const step2 = currentSteps[i + 1];
+                
+                // Ищем координаты объектов на текущем этаже
+                const objects = pagesData[currentFloor].objects || [];
+                const obj1 = objects.find(obj => obj.name === step1.objectName);
+                const obj2 = objects.find(obj => obj.name === step2.objectName);
+                
+                if (obj1 && obj2) {
+                    // Координаты в процентах
+                    const x1 = obj1.x * 100;
+                    const y1 = obj1.y * 100;
+                    const x2 = obj2.x * 100;
+                    const y2 = obj2.y * 100;
+                    
+                    // Рассчитываем расстояние и угол
+                    const dx = x2 - x1;
+                    const dy = y2 - y1;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+                    
+                    // Создаем линию
+                    const line = document.createElement('div');
+                    line.className = 'route-line';
+                    line.style.left = `${x1}%`;
+                    line.style.top = `${y1}%`;
+                    line.style.width = `${distance}%`;
+                    line.style.transform = `rotate(${angle}deg)`;
+                    
+                    imageContainer.appendChild(line);
+                    
+                    // Добавляем точку в конце линии
+                    if (i < currentSteps.length - 2) {
+                        const point = document.createElement('div');
+                        point.className = 'route-point';
+                        point.style.left = `${x2}%`;
+                        point.style.top = `${y2}%`;
+                        imageContainer.appendChild(point);
+                    }
+                }
+            }
+        }
+
+        // --- Функция сброса режимов редактирования ---
+        function resetEditModes() {
+            addObjectMode = false;
+            deleteObjectMode = false;
+            routeMode = false;
+            pageImage.classList.remove('add-object-cursor');
+            pageImage.classList.remove('route-mode-cursor');
+            addObjectBtn.classList.remove('active');
+            deleteObjectBtn.classList.remove('active');
+            routeIcon.classList.remove('route-mode');
+            addObjectBtn.textContent = 'Добавить объект на фото';
+            deleteObjectBtn.textContent = 'Удалить объект';
+        }
+
+        // --- Функция сброса режима маршрута ---
+        function resetRouteMode() {
+            routeMode = false;
+            routeStart = null;
+            routeEnd = null;
+            currentRoute = null;
+            currentStepIndex = 0;
+            routeIcon.classList.remove('route-mode');
+            pageImage.classList.remove('route-mode-cursor');
+            routeStartInfo.style.display = 'none';
+            routeEndInfo.style.display = 'none';
+            routeSteps.style.display = 'none';
+            startRouteBtn.style.display = 'none';
+            clearRouteBtn.style.display = 'none';
+            nextStepBtn.style.display = 'none';
+            routeStatusText.textContent = 'Выберите начальную точку';
+        }
+
+        // --- Функция обработки клика по объекту для маршрута ---
+        function handleObjectClickForRoute(objectName, corpus, floor, x, y) {
+            if (!routeStart) {
+                // Устанавливаем начальную точку
+                routeStart = {
+                    name: objectName,
+                    corpus: corpus,
+                    floor: floor,
+                    x: x,
+                    y: y
+                };
+                routeStartName.textContent = `${objectName} (Корпус ${corpus}, Этаж ${floor})`;
+                routeStartInfo.style.display = 'block';
+                routeStatusText.textContent = 'Выберите конечную точку';
+                showMessage(`Начальная точка: ${objectName}. Теперь выберите конечную точку.`, 'info');
+            } else if (!routeEnd) {
+                // Устанавливаем конечную точку
+                routeEnd = {
+                    name: objectName,
+                    corpus: corpus,
+                    floor: floor,
+                    x: x,
+                    y: y
+                };
+                routeEndName.textContent = `${objectName} (Корпус ${corpus}, Этаж ${floor})`;
+                routeEndInfo.style.display = 'block';
+                routeStatusText.textContent = 'Маршрут определен. Нажмите "Начать маршрут"';
+                startRouteBtn.style.display = 'inline-block';
+                clearRouteBtn.style.display = 'inline-block';
+                
+                // Генерируем предварительный маршрут
+                generateRoute();
+            }
+        }
+
+        // --- Функция генерации маршрута ---
+        function generateRoute() {
+            if (!routeStart || !routeEnd) return;
+            
+            currentRoute = {
+                start: routeStart,
+                end: routeEnd,
+                steps: []
+            };
+            
+            // Простой алгоритм маршрута (можно усложнить)
+            // Если объекты на одном этаже и корпусе
+            if (routeStart.corpus === routeEnd.corpus && routeStart.floor === routeEnd.floor) {
+                currentRoute.steps = [
+                    { type: 'start', objectName: routeStart.name, corpus: routeStart.corpus, floor: routeStart.floor, stepIndex: 0 },
+                    { type: 'end', objectName: routeEnd.name, corpus: routeEnd.corpus, floor: routeEnd.floor, stepIndex: 1 }
+                ];
+            } else {
+                // Если на разных этажах или корпусах
+                // Добавляем переходные точки (лестницы, выходы)
+                currentRoute.steps = [
+                    { type: 'start', objectName: routeStart.name, corpus: routeStart.corpus, floor: routeStart.floor, stepIndex: 0 },
+                    { type: 'transition', objectName: 'Лестница', corpus: routeStart.corpus, floor: routeStart.floor, stepIndex: 1 },
+                    { type: 'transition', objectName: 'Лестница', corpus: routeEnd.corpus, floor: routeEnd.floor, stepIndex: 2 },
+                    { type: 'end', objectName: routeEnd.name, corpus: routeEnd.corpus, floor: routeEnd.floor, stepIndex: 3 }
+                ];
+            }
+            
+            // Отображаем шаги маршрута
+            renderRouteSteps();
+        }
+
+        // --- Функция отрисовки шагов маршрута ---
+        function renderRouteSteps() {
+            routeStepsList.innerHTML = '';
+            currentRoute.steps.forEach((step, index) => {
+                const li = document.createElement('li');
+                li.className = 'route-step';
+                if (index === currentStepIndex) {
+                    li.classList.add('current');
+                }
+                
+                let stepText = '';
+                if (step.type === 'start') {
+                    stepText = `Начало: ${step.objectName} (Корпус ${step.corpus}, Этаж ${step.floor})`;
+                } else if (step.type === 'end') {
+                    stepText = `Конец: ${step.objectName} (Корпус ${step.corpus}, Этаж ${step.floor})`;
+                } else if (step.type === 'transition') {
+                    stepText = `Переход: ${step.objectName} (Корпус ${step.corpus}, Этаж ${step.floor})`;
+                } else {
+                    stepText = `${step.objectName} (Корпус ${step.corpus}, Этаж ${step.floor})`;
+                }
+                
+                li.textContent = stepText;
+                routeStepsList.appendChild(li);
+            });
+            
+            routeSteps.style.display = 'block';
+            nextStepBtn.style.display = 'inline-block';
+        }
+
+        // --- Функция начала следования по маршруту ---
+        function startRoute() {
+            if (!currentRoute || currentRoute.steps.length === 0) return;
+            
+            currentStepIndex = 0;
+            const firstStep = currentRoute.steps[0];
+            loadPage(firstStep.corpus, firstStep.floor);
+            routeModal.classList.remove('active');
+            showMessage(`Маршрут начат. Следуйте к: ${firstStep.objectName}`, 'info');
+            renderRouteSteps();
+        }
+
+        // --- Функция перехода к следующему шагу маршрута ---
+        function goToNextStep() {
+            if (!currentRoute || currentStepIndex >= currentRoute.steps.length - 1) {
+                showMessage('Маршрут завершен!', 'info');
+                resetRouteMode();
+                renderObjects();
+                return;
+            }
+            
+            currentStepIndex++;
+            const nextStep = currentRoute.steps[currentStepIndex];
+            
+            // Если следующий шаг на другом этаже или корпусе
+            if (nextStep.corpus !== currentCorpus || nextStep.floor !== currentFloor) {
+                loadPage(nextStep.corpus, nextStep.floor);
+            }
+            
+            renderRouteSteps();
+            renderObjects();
+            
+            // Если это последний шаг
+            if (currentStepIndex === currentRoute.steps.length - 1) {
+                showMessage('Вы достигли конечной точки маршрута!', 'info');
+            } else {
+                showMessage(`Следующий шаг: ${nextStep.objectName}`, 'info');
+            }
+        }
+
+        // --- Функция подсветки объекта ---
+        function highlightObject(objectName) {
+            const labels = content.querySelectorAll('.object-label');
+            labels.forEach(label => {
+                if (label.textContent === objectName) {
+                    label.style.background = '#ffe066';
+                    label.style.boxShadow = '0 0 10px rgba(255, 224, 102, 0.8)';
+                    label.style.zIndex = '200';
+                    setTimeout(() => {
+                        label.style.background = '';
+                        label.style.boxShadow = '';
+                        label.style.zIndex = '100';
+                    }, 3000);
+                }
+            });
+        }
+
+        // --- Загрузка страницы ---
+        function loadPage(corpus, floor) {
+            if (!pagesData) {
+                pageText.textContent = 'Данные не загружены';
+                return;
+            }
+
+            currentCorpus = corpus;
+            currentFloor = floor;
+            
+            const corpusInfo = corpusInfoData[corpus];
+            pageTitle.textContent = `Карта ${corpusInfo.name} ИжГТУ`;
+            document.getElementById('corpusInfo').textContent = corpusInfo.description;
+            
+            // Для 3 корпуса используем данные из pagesData
+            if (corpus === 3) {
+                if (pagesData[floor]) {
+                    pageImage.src = pagesData[floor].imageSrc;
+                    pageText.textContent = pagesData[floor].text;
+                } else {
+                    // ИЗМЕНЕНИЕ: Для этажей 3-го корпуса всегда используем oneNOtext.jpg
+                    pageText.textContent = `Этаж ${floor}`;
+                    pageImage.src = 'images/oneNOtext.jpg';
+                }
+            } else {
+                // Для других корпусов показываем сообщение
+                pageText.textContent = `Этаж ${floor}`;
+                showMessage('Данные доступны только для 3 корпуса. Для просмотра других корпусов добавьте изображения в папку images.', 'info');
+                pageImage.src = 'images/tech.jpg';
+            }
+
+            // Обновление активных кнопок
+            corpusButtons.forEach(btn => btn.classList.remove('active'));
+            corpusButtons.forEach(btn => {
+                if (parseInt(btn.dataset.corpus) === corpus) {
+                    btn.classList.add('active');
+                }
+            });
+
+            floorButtons.forEach(btn => btn.classList.remove('active'));
+            floorButtons.forEach(btn => {
+                if (parseInt(btn.dataset.floor) === floor) {
+                    btn.classList.add('active');
+                }
+            });
+
+            // Показываем/скрываем панель редактирования только для 3 корпуса
+            editPanel.style.display = (isAdmin && corpus === 3) ? 'block' : 'none';
+            
+            resetEditModes();
+            renderObjects();
+        }
+
+        // --- Функция загрузки данных с сервера ---
+        async function loadDataFromServer() {
+            try {
+                loader.style.display = 'block';
+                pageText.textContent = 'Загрузка данных...';
+                debugInfo.style.display = 'block';
+                
+                const url = DATA_FILE + '?t=' + Date.now();
+                debugInfo.innerHTML = `Загрузка данных: ${url}<br>`;
+                
+                const response = await fetch(url);
+                
+                debugInfo.innerHTML += `Статус ответа: ${response.status}<br>`;
+                
+                if (!response.ok) {
+                    throw new Error(`Ошибка HTTP: ${response.status}`);
+                }
+                
+                const text = await response.text();
+                debugInfo.innerHTML += `Получено: ${text.length} символов<br>`;
+                
+                if (!text.trim()) {
+                    throw new Error('Файл пустой');
+                }
+                
+                const serverData = JSON.parse(text);
+                debugInfo.innerHTML += `Данные успешно загружены<br>`;
+                
+                // Валидация данных
+                if (typeof serverData !== 'object' || serverData === null) {
+                    throw new Error('Некорректный формат данных');
+                }
+                
+                // Проверяем структуру данных
+                debugInfo.innerHTML += `Структура данных:<br>`;
+                for (let key in serverData) {
+                    if (serverData.hasOwnProperty(key)) {
+                        debugInfo.innerHTML += `Этаж ${key}: ${serverData[key].objects ? serverData[key].objects.length : 0} объектов<br>`;
+                    }
+                }
+                
+                loader.style.display = 'none';
+                return serverData;
+                
+            } catch (error) {
+                loader.style.display = 'none';
+                debugInfo.innerHTML += `<span style="color: red;">Ошибка: ${error.message}</span><br>`;
+                console.error('Ошибка загрузки данных:', error);
+                return null;
+            }
+        }
+
+        // --- Сохранение данных в файл ---
+        function saveDataToFile() {
+            const dataStr = JSON.stringify(pagesData, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'data.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showMessage('Файл data.json скачан. Загрузите его в корневую папку репозитория.');
+        }
+
+        // --- Поиск по объектам ---
+        function searchObjects(query) {
+            const results = [];
+            if (!pagesData) return results;
+            
+            // Ищем только в 3 корпусе
+            for (let floor in pagesData) {
+                if (pagesData[floor].objects) {
+                    pagesData[floor].objects.forEach(obj => {
+                        if (obj.name.toLowerCase().includes(query.toLowerCase())) {
+                            results.push({
+                                corpus: 3, // Всегда 3 корпус
+                                floor: floor,
+                                name: obj.name,
+                                x: obj.x,
+                                y: obj.y
+                            });
+                        }
+                    });
+                }
+            }
+            return results;
+        }
+
+        // --- Обработчики событий для корпусов ---
+        corpusButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const corpus = parseInt(button.dataset.corpus);
+                loadPage(corpus, 1); // При переключении корпуса показываем 1 этаж
+            });
+        });
+
+        // --- Обработчики событий для этажей ---
+        floorButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const floor = parseInt(button.dataset.floor);
+                loadPage(currentCorpus, floor);
+            });
+        });
+
+        // --- Режим администратора ---
+        if (isAdmin) {
+            addObjectBtn.addEventListener('click', () => {
+                if (addObjectMode) {
+                    resetEditModes();
+                    showMessage('Режим добавления отменен');
+                } else {
+                    addObjectMode = true;
+                    deleteObjectMode = false;
+                    routeMode = false;
+                    pageImage.classList.add('add-object-cursor');
+                    pageImage.classList.remove('route-mode-cursor');
+                    addObjectBtn.classList.add('active');
+                    deleteObjectBtn.classList.remove('active');
+                    routeIcon.classList.remove('route-mode');
+                    addObjectBtn.textContent = 'Отменить добавление';
+                    deleteObjectBtn.textContent = 'Удалить объект';
+                    renderObjects();
+                    showMessage('Кликните по фото в нужном месте, чтобы добавить объект');
+                }
+            });
+
+            deleteObjectBtn.addEventListener('click', () => {
+                if (deleteObjectMode) {
+                    resetEditModes();
+                    showMessage('Режим удаления отменен');
+                } else {
+                    deleteObjectMode = true;
+                    addObjectMode = false;
+                    routeMode = false;
+                    pageImage.classList.remove('add-object-cursor');
+                    pageImage.classList.remove('route-mode-cursor');
+                    deleteObjectBtn.classList.add('active');
+                    addObjectBtn.classList.remove('active');
+                    routeIcon.classList.remove('route-mode');
+                    deleteObjectBtn.textContent = 'Отменить удаление';
+                    addObjectBtn.textContent = 'Добавить объект на фото';
+                    renderObjects();
+                    showMessage('Кликните по объекту, который хотите удалить');
+                }
+            });
+
+            saveFileBtn.addEventListener('click', saveDataToFile);
+
+            refreshDataBtn.addEventListener('click', async () => {
+                showMessage('Обновление данных...');
+                const newData = await loadDataFromServer();
+                if (newData) {
+                    pagesData = newData;
+                    loadPage(currentCorpus, currentFloor);
+                    showMessage('Данные успешно обновлены');
+                }
+            });
+
+            pageImage.addEventListener('click', function(e) {
+                if (!addObjectMode || currentCorpus !== 3) return;
+
+                const rect = pageImage.getBoundingClientRect();
+                
+                if (e.clientX < rect.left || e.clientX > rect.right || 
+                    e.clientY < rect.top || e.clientY > rect.bottom) {
+                    return;
+                }
+
+                const x = (e.clientX - rect.left) / rect.width;
+                const y = (e.clientY - rect.top) / rect.height;
+
+                const name = prompt('Введите название объекта:');
+                if (name && name.trim()) {
+                    const objectName = name.trim();
+                    
+                    if (!pagesData[currentFloor]) {
+                        // ИЗМЕНЕНИЕ: При создании нового этажа используем oneNOtext.jpg
+                        pagesData[currentFloor] = { text: `Этаж ${currentFloor}`, imageSrc: "images/oneNOtext.jpg", objects: [] };
+                    }
+                    if (!pagesData[currentFloor].objects) {
+                        pagesData[currentFloor].objects = [];
+                    }
+                    
+                    pagesData[currentFloor].objects.push({ 
+                        name: objectName, 
+                        x: Math.max(0, Math.min(1, x)),
+                        y: Math.max(0, Math.min(1, y))
+                    });
+                    renderObjects();
+                    resetEditModes();
+                    showMessage(`Объект "${objectName}" добавлен`);
+                } else {
+                    showMessage('Название объекта не может быть пустым', 'error');
+                }
+            });
+        }
+
+        // --- Поиск ---
+        searchInput.addEventListener('input', function() {
+            const query = this.value.trim();
+            searchResults.innerHTML = '';
+            if (!query) return;
+            
+            const found = searchObjects(query);
+            if (found.length === 0) {
+                const li = document.createElement('li');
+                li.textContent = 'Ничего не найдено';
+                li.style.color = '#888';
+                li.style.padding = '15px';
+                li.style.textAlign = 'center';
+                searchResults.appendChild(li);
+            } else {
+                found.forEach(item => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `<strong>${item.name}</strong><br>
+                                   <small>Корпус ${item.corpus}, Этаж ${item.floor}</small>`;
+                    li.style.cursor = 'pointer';
+                    li.style.padding = '12px';
+                    li.style.borderRadius = '6px';
+                    li.onclick = () => {
+                        loadPage(parseInt(item.corpus), parseInt(item.floor));
+                        setTimeout(() => {
+                            highlightObject(item.name);
+                        }, 300);
+                        searchModal.classList.remove('active');
+                    };
+                    searchResults.appendChild(li);
+                });
+            }
+        });
+
+        // --- Быстрый доступ ---
+        quickAccessIcon.addEventListener('click', () => {
+            quickAccessModal.classList.add('active');
+            renderQuickAccessList();
+        });
+
+        // --- Построение маршрута ---
+        routeIcon.addEventListener('click', () => {
+            if (routeMode) {
+                resetRouteMode();
+                renderObjects();
+                showMessage('Режим построения маршрута отменен');
+            } else {
+                routeMode = true;
+                addObjectMode = false;
+                deleteObjectMode = false;
+                pageImage.classList.remove('add-object-cursor');
+                pageImage.classList.add('route-mode-cursor');
+                routeIcon.classList.add('route-mode');
+                addObjectBtn.classList.remove('active');
+                deleteObjectBtn.classList.remove('active');
+                
+                routeModal.classList.add('active');
+                resetRouteMode();
+                routeStatusText.textContent = 'Выберите начальную точку на карте';
+                showMessage('Выберите начальную точку маршрута на карте');
+                renderObjects();
+            }
+        });
+
+        // --- Обработчики для модальных окон ---
+        closeSearchModal.addEventListener('click', () => {
+            searchModal.classList.remove('active');
+        });
+
+        closeQuickAccessModal.addEventListener('click', () => {
+            quickAccessModal.classList.remove('active');
+        });
+
+        closeRouteModal.addEventListener('click', () => {
+            routeModal.classList.remove('active');
+            resetRouteMode();
+            renderObjects();
+        });
+
+        window.addEventListener('click', (e) => {
+            if (e.target === searchModal) {
+                searchModal.classList.remove('active');
+            }
+            if (e.target === quickAccessModal) {
+                quickAccessModal.classList.remove('active');
+            }
+            if (e.target === routeModal) {
+                routeModal.classList.remove('active');
+                resetRouteMode();
+                renderObjects();
+            }
+        });
+
+        // --- Обработчики для кнопок маршрута ---
+        cancelRouteBtn.addEventListener('click', () => {
+            routeModal.classList.remove('active');
+            resetRouteMode();
+            renderObjects();
+        });
+
+        startRouteBtn.addEventListener('click', startRoute);
+
+        clearRouteBtn.addEventListener('click', () => {
+            resetRouteMode();
+            renderObjects();
+            routeStatusText.textContent = 'Выберите начальную точку';
+            startRouteBtn.style.display = 'none';
+            clearRouteBtn.style.display = 'none';
+            routeStartInfo.style.display = 'none';
+            routeEndInfo.style.display = 'none';
+            routeSteps.style.display = 'none';
+        });
+
+        nextStepBtn.addEventListener('click', goToNextStep);
+
+        window.addEventListener('keydown', e => {
+            if (e.key === 'Escape') {
+                searchModal.classList.remove('active');
+                quickAccessModal.classList.remove('active');
+                routeModal.classList.remove('active');
+                resetEditModes();
+                resetRouteMode();
+                renderObjects();
+            }
+        });
+
+        // --- Инициализация при загрузке ---
+        async function initialize() {
+            // Загружаем быстрый доступ
+            loadQuickAccess();
+            
+            const serverData = await loadDataFromServer();
+            
+            if (serverData) {
+                pagesData = serverData;
+                showMessage('Данные успешно загружены из data.json');
+                debugInfo.innerHTML += '<span style="color: green;">✓ Данные загружены успешно</span>';
+                // Показываем сколько объектов загружено
+                let totalObjects = 0;
+                for (let floor in pagesData) {
+                    if (pagesData[floor].objects) {
+                        totalObjects += pagesData[floor].objects.length;
+                    }
+                }
+                debugInfo.innerHTML += `<br>Всего объектов: ${totalObjects}`;
+            } else {
+                pagesData = JSON.parse(JSON.stringify(defaultPagesData));
+                showMessage('Файл data.json не найден. Используются данные по умолчанию.', 'info');
+                debugInfo.innerHTML += '<span style="color: orange;">⚠ Используются данные по умолчанию</span>';
+            }
+            
+            loadPage(3, 1);
+        }
+
+        // --- Запуск приложения ---
+        initialize();
+
+        // --- Функция сброса данных (для консоли) ---
+        function resetAllData() {
+            if (confirm('Вы уверены, что хотите сбросить все данные к значениям по умолчанию?')) {
+                pagesData = JSON.parse(JSON.stringify(defaultPagesData));
+                loadPage(currentCorpus, currentFloor);
+                showMessage('Все данные сброшены к значениям по умолчанию');
+            }
+        }
+
+        // --- Функция очистки быстрого доступа (для консоли) ---
+        function clearQuickAccess() {
+            if (confirm('Очистить весь список быстрого доступа?')) {
+                quickAccessItems = [];
+                saveQuickAccess();
+                renderQuickAccessList();
+                showMessage('Список быстрого доступа очищен');
+            }
+        }
+
+        console.log('Для сброса всех данных выполните: resetAllData()');
+        console.log('Для очистки быстрого доступа: clearQuickAccess()');
+        console.log('Текущий корпус:', currentCorpus, 'Текущий этаж:', currentFloor);
+    </script>
+</body>
+</html>
