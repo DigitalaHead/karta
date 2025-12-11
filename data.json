@@ -1,12 +1,12 @@
 {
   "1": {
     "text": "Этаж 1",
-    "imageSrc": "images/tech.jpg",
+    "imageSrc": "images/oneNOtext.jpg",
     "objects": []
   },
   "2": {
     "text": "Этаж 2",
-    "imageSrc": "images/tech.jpg",
+    "imageSrc": "images/oneNOtext.jpg",
     "objects": []
   },
   "3": {
@@ -82,32 +82,32 @@
   },
   "4": {
     "text": "Этаж 4",
-    "imageSrc": "images/tech.jpg",
+    "imageSrc": "images/oneNOtext.jpg",
     "objects": []
   },
   "5": {
     "text": "Этаж 5",
-    "imageSrc": "images/tech.jpg",
+    "imageSrc": "images/oneNOtext.jpg",
     "objects": []
   },
   "6": {
     "text": "Этаж 6",
-    "imageSrc": "images/tech.jpg",
+    "imageSrc": "images/oneNOtext.jpg",
     "objects": []
   },
   "7": {
     "text": "Этаж 7",
-    "imageSrc": "images/tech.jpg",
+    "imageSrc": "images/oneNOtext.jpg",
     "objects": []
   },
   "8": {
     "text": "Этаж 8",
-    "imageSrc": "images/tech.jpg",
+    "imageSrc": "images/oneNOtext.jpg",
     "objects": []
   },
   "9": {
     "text": "Этаж 9",
-    "imageSrc": "images/tech.jpg",
+    "imageSrc": "images/oneNOtext.jpg",
     "objects": []
   }
 }
