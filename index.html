@@ -111,6 +111,12 @@
             transform: translateY(-2px);
         }
         
+        .control-icon.active {
+            background-color: #005a9e;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        
         .control-icon span {
             color: white;
             font-weight: bold;
@@ -122,6 +128,10 @@
         }
         
         .control-icon.route-mode:hover {
+            background-color: #7b1fa2;
+        }
+        
+        .control-icon.route-mode.active {
             background-color: #7b1fa2;
         }
         
@@ -604,6 +614,90 @@
             outline: none;
         }
         
+        /* Панель управления маршрутом на странице */
+        .route-control-panel {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            border: 2px solid var(--route-color);
+            border-radius: 12px;
+            padding: 15px;
+            z-index: 2000;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            min-width: 300px;
+            max-width: 90%;
+            text-align: center;
+            display: none;
+        }
+        
+        .route-control-panel.active {
+            display: block;
+        }
+        
+        .route-panel-info {
+            font-size: 16px;
+            font-weight: bold;
+            color: var(--route-color);
+            margin-bottom: 8px;
+        }
+        
+        .route-panel-description {
+            font-size: 14px;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        
+        .route-panel-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+        
+        .route-panel-btn {
+            padding: 8px 16px;
+            background: var(--route-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .route-panel-btn:hover {
+            background: #7b1fa2;
+        }
+        
+        .route-panel-btn.cancel {
+            background: #6c757d;
+        }
+        
+        .route-panel-btn.cancel:hover {
+            background: #5a6268;
+        }
+        
+        /* Индикатор поиска */
+        .search-indicator {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--primary-color);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            z-index: 2000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            display: none;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        
+        .search-indicator.active {
+            display: block;
+        }
+        
         /* Адаптация для телефона */
         @media (max-width: 768px) {
             :root {
@@ -735,6 +829,20 @@
                 min-width: 300px;
                 padding: 20px;
             }
+            
+            .route-control-panel {
+                bottom: 60px;
+                min-width: 250px;
+                padding: 10px;
+            }
+            
+            .search-indicator {
+                top: 75px;
+                left: 10px;
+                right: 10px;
+                transform: none;
+                text-align: center;
+            }
         }
         
         @media (max-width: 480px) {
@@ -764,6 +872,15 @@
             .object-label {
                 font-size: 10px;
                 padding: 3px 6px;
+            }
+            
+            .route-control-panel {
+                min-width: 200px;
+                padding: 8px;
+            }
+            
+            .route-panel-buttons {
+                flex-wrap: wrap;
             }
         }
         
@@ -844,6 +961,11 @@
         </button>
     </div>
 
+    <!-- Индикатор активного поиска -->
+    <div class="search-indicator" id="searchIndicator">
+        🔍 Поиск активен
+    </div>
+
     <!-- Иконки управления -->
     <div class="control-icons">
         <div class="control-icon" id="searchIcon" title="Поиск по объектам">
@@ -857,13 +979,36 @@
         </div>
     </div>
 
+    <!-- Панель управления маршрутом на странице -->
+    <div class="route-control-panel" id="routeControlPanel">
+        <div class="route-panel-info" id="routePanelInfo">
+            Маршрут: Шаг <span id="currentStepNumber">1</span> из <span id="totalSteps">5</span>
+        </div>
+        <div class="route-panel-description" id="routePanelDescription">
+            Перейдите к объекту: <strong id="routeStepName">Название объекта</strong>
+        </div>
+        <div class="route-panel-buttons">
+            <button class="route-panel-btn" id="prevStepBtn">← Предыдущий</button>
+            <button class="route-panel-btn cancel" id="endRouteBtn">Завершить</button>
+            <button class="route-panel-btn" id="nextStepBtn">Следующий →</button>
+        </div>
+    </div>
+
     <!-- Модальное окно поиска -->
     <div class="modal" id="searchModal">
         <div class="modal-content">
             <span class="modal-close" id="closeSearchModal">&times;</span>
             <h2>Поиск по объектам</h2>
-            <input type="text" id="searchInput" placeholder="Введите название объекта..." 
-                   style="width:100%;padding:12px;font-size:16px;border:2px solid #ddd;border-radius:6px;margin-top:10px;">
+            <div style="display: flex; gap: 10px; margin-top: 15px;">
+                <input type="text" id="searchInput" placeholder="Введите название объекта..." 
+                       style="flex: 1; padding:12px;font-size:16px;border:2px solid #ddd;border-radius:6px;">
+                <button id="clearSearchBtn" style="padding: 0 20px; background: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer;">
+                    Очистить
+                </button>
+            </div>
+            <div style="margin-top: 10px; font-size: 14px; color: #666;">
+                Найдено объектов: <span id="searchCount">0</span>
+            </div>
             <ul class="search-results" id="searchResults"></ul>
         </div>
     </div>
@@ -922,7 +1067,6 @@
                 <button class="route-btn" id="generateRouteBtn">Построить маршрут</button>
                 <button class="route-btn" id="startRouteBtn" style="display:none;">Начать маршрут</button>
                 <button class="route-btn" id="clearRouteBtn" style="display:none;">Очистить маршрут</button>
-                <button class="route-btn" id="nextStepBtn" style="display:none;">Следующий шаг</button>
             </div>
         </div>
     </div>
@@ -1014,7 +1158,18 @@
         const cancelRouteBtn = document.getElementById('cancelRouteBtn');
         const startRouteBtn = document.getElementById('startRouteBtn');
         const clearRouteBtn = document.getElementById('clearRouteBtn');
+        const clearSearchBtn = document.getElementById('clearSearchBtn');
+        const searchIndicator = document.getElementById('searchIndicator');
+        const searchCount = document.getElementById('searchCount');
+        const routeControlPanel = document.getElementById('routeControlPanel');
+        const currentStepNumber = document.getElementById('currentStepNumber');
+        const totalSteps = document.getElementById('totalSteps');
+        const routeStepName = document.getElementById('routeStepName');
+        const routePanelInfo = document.getElementById('routePanelInfo');
+        const routePanelDescription = document.getElementById('routePanelDescription');
+        const prevStepBtn = document.getElementById('prevStepBtn');
         const nextStepBtn = document.getElementById('nextStepBtn');
+        const endRouteBtn = document.getElementById('endRouteBtn');
 
         // --- Константы ---
         const DATA_FILE = './data.json';
@@ -1059,6 +1214,8 @@
         let currentStepIndex = 0;
         let quickAccessItems = [];
         let allObjectsList = [];
+        let activeSearch = false;
+        let searchQuery = '';
 
         // --- Функция показа сообщения ---
         function showMessage(text, type = 'info') {
@@ -1253,6 +1410,16 @@
                 label.dataset.objectId = index;
                 label.dataset.objectName = obj.name;
 
+                // Если активен поиск и объект соответствует запросу
+                if (activeSearch && searchQuery) {
+                    if (obj.name.toLowerCase().includes(searchQuery.toLowerCase())) {
+                        label.style.background = '#fff3cd';
+                        label.style.borderColor = '#ffc107';
+                        label.style.zIndex = '200';
+                        label.style.boxShadow = '0 0 10px rgba(255, 193, 7, 0.5)';
+                    }
+                }
+
                 // Если объект - часть текущего маршрута
                 if (currentRoute && currentRoute.steps) {
                     const step = currentRoute.steps.find(s => 
@@ -1262,6 +1429,8 @@
                     if (step) {
                         if (step.stepIndex === currentStepIndex) {
                             label.classList.add('route-point', 'current');
+                            label.style.zIndex = '250';
+                            label.style.boxShadow = '0 0 15px rgba(156, 39, 176, 0.8)';
                         } else if (step.type === 'start') {
                             label.classList.add('route-start');
                         } else if (step.type === 'end') {
@@ -1376,11 +1545,38 @@
             routeSteps.style.display = 'none';
             startRouteBtn.style.display = 'none';
             clearRouteBtn.style.display = 'none';
-            nextStepBtn.style.display = 'none';
+            routeControlPanel.classList.remove('active');
             
             // Сбрасываем выбор в выпадающих списках
             routeStartSelect.value = '';
             routeEndSelect.value = '';
+        }
+
+        // --- Функция обновления панели управления маршрутом ---
+        function updateRoutePanel() {
+            if (!currentRoute || currentRoute.steps.length === 0) return;
+            
+            const total = currentRoute.steps.length;
+            const currentStep = currentRoute.steps[currentStepIndex];
+            
+            currentStepNumber.textContent = currentStepIndex + 1;
+            totalSteps.textContent = total;
+            
+            let description = '';
+            if (currentStep.type === 'start') {
+                description = `Начало маршрута: ${currentStep.objectName}`;
+            } else if (currentStep.type === 'end') {
+                description = `Конечная точка: ${currentStep.objectName}`;
+            } else {
+                description = `Перейдите к: ${currentStep.objectName}`;
+            }
+            
+            routeStepName.textContent = currentStep.objectName;
+            routePanelDescription.innerHTML = description;
+            
+            // Обновляем состояние кнопок
+            prevStepBtn.disabled = currentStepIndex === 0;
+            nextStepBtn.disabled = currentStepIndex === total - 1;
         }
 
         // --- Функция генерации маршрута ---
@@ -1393,7 +1589,7 @@
                 steps: []
             };
             
-            // Простой алгоритм маршрута (можно усложнить)
+            // Простой алгоритм маршрута
             // Если объекты на одном этаже и корпусе
             if (routeStart.corpus === routeEnd.corpus && routeStart.floor === routeEnd.floor) {
                 currentRoute.steps = [
@@ -1402,7 +1598,6 @@
                 ];
             } else {
                 // Если на разных этажах или корпусах
-                // Добавляем переходные точки (лестницы, выходы)
                 currentRoute.steps = [
                     { type: 'start', objectName: routeStart.name, corpus: routeStart.corpus, floor: routeStart.floor, stepIndex: 0 },
                     { type: 'transition', objectName: 'Лестница', corpus: routeStart.corpus, floor: routeStart.floor, stepIndex: 1 },
@@ -1443,7 +1638,6 @@
             routeSteps.style.display = 'block';
             startRouteBtn.style.display = 'inline-block';
             clearRouteBtn.style.display = 'inline-block';
-            nextStepBtn.style.display = 'inline-block';
         }
 
         // --- Функция начала следования по маршруту ---
@@ -1454,8 +1648,13 @@
             const firstStep = currentRoute.steps[0];
             loadPage(firstStep.corpus, firstStep.floor);
             routeModal.classList.remove('active');
+            
+            // Показываем панель управления маршрутом
+            routeControlPanel.classList.add('active');
+            
+            updateRoutePanel();
+            renderObjects();
             showMessage(`Маршрут начат. Следуйте к: ${firstStep.objectName}`, 'info');
-            renderRouteSteps();
         }
 
         // --- Функция перехода к следующему шагу маршрута ---
@@ -1475,7 +1674,7 @@
                 loadPage(nextStep.corpus, nextStep.floor);
             }
             
-            renderRouteSteps();
+            updateRoutePanel();
             renderObjects();
             
             // Если это последний шаг
@@ -1486,21 +1685,131 @@
             }
         }
 
+        // --- Функция перехода к предыдущему шагу маршрута ---
+        function goToPrevStep() {
+            if (!currentRoute || currentStepIndex <= 0) return;
+            
+            currentStepIndex--;
+            const prevStep = currentRoute.steps[currentStepIndex];
+            
+            // Если предыдущий шаг на другом этаже или корпусе
+            if (prevStep.corpus !== currentCorpus || prevStep.floor !== currentFloor) {
+                loadPage(prevStep.corpus, prevStep.floor);
+            }
+            
+            updateRoutePanel();
+            renderObjects();
+            showMessage(`Предыдущий шаг: ${prevStep.objectName}`, 'info');
+        }
+
+        // --- Функция завершения маршрута ---
+        function endRoute() {
+            if (confirm('Завершить маршрут?')) {
+                resetRouteMode();
+                renderObjects();
+                showMessage('Маршрут завершен', 'info');
+            }
+        }
+
         // --- Функция подсветки объекта ---
         function highlightObject(objectName) {
             const labels = content.querySelectorAll('.object-label');
             labels.forEach(label => {
                 if (label.textContent === objectName) {
                     label.style.background = '#ffe066';
+                    label.style.borderColor = '#ffc107';
                     label.style.boxShadow = '0 0 10px rgba(255, 224, 102, 0.8)';
                     label.style.zIndex = '200';
                     setTimeout(() => {
                         label.style.background = '';
+                        label.style.borderColor = '';
                         label.style.boxShadow = '';
                         label.style.zIndex = '100';
                     }, 3000);
                 }
             });
+        }
+
+        // --- Функция активного поиска ---
+        function performSearch(query) {
+            searchQuery = query.trim();
+            activeSearch = searchQuery.length > 0;
+            
+            if (activeSearch) {
+                searchIcon.classList.add('active');
+                searchIndicator.classList.add('active');
+                
+                // Выполняем поиск
+                const results = searchObjects(searchQuery);
+                searchCount.textContent = results.length;
+                
+                // Обновляем отображение объектов
+                renderObjects();
+                
+                // Показываем результаты в модальном окне
+                updateSearchResults(results);
+            } else {
+                searchIcon.classList.remove('active');
+                searchIndicator.classList.remove('active');
+                searchCount.textContent = '0';
+                renderObjects();
+                updateSearchResults([]);
+            }
+        }
+
+        // --- Функция обновления результатов поиска ---
+        function updateSearchResults(results) {
+            searchResults.innerHTML = '';
+            
+            if (results.length === 0 && searchQuery) {
+                const li = document.createElement('li');
+                li.textContent = 'Ничего не найдено';
+                li.style.color = '#888';
+                li.style.padding = '15px';
+                li.style.textAlign = 'center';
+                searchResults.appendChild(li);
+            } else {
+                results.forEach(item => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `<strong>${item.name}</strong><br>
+                                   <small>Корпус ${item.corpus}, Этаж ${item.floor}</small>`;
+                    li.style.cursor = 'pointer';
+                    li.style.padding = '12px';
+                    li.style.borderRadius = '6px';
+                    li.onclick = () => {
+                        loadPage(parseInt(item.corpus), parseInt(item.floor));
+                        setTimeout(() => {
+                            highlightObject(item.name);
+                        }, 300);
+                        // Не закрываем модальное окно при активном поиске
+                    };
+                    searchResults.appendChild(li);
+                });
+            }
+        }
+
+        // --- Поиск по объектам ---
+        function searchObjects(query) {
+            const results = [];
+            if (!pagesData) return results;
+            
+            // Ищем только в 3 корпусе
+            for (let floor in pagesData) {
+                if (pagesData[floor].objects) {
+                    pagesData[floor].objects.forEach(obj => {
+                        if (obj.name.toLowerCase().includes(query.toLowerCase())) {
+                            results.push({
+                                corpus: 3, // Всегда 3 корпус
+                                floor: floor,
+                                name: obj.name,
+                                x: obj.x,
+                                y: obj.y
+                            });
+                        }
+                    });
+                }
+            }
+            return results;
         }
 
         // --- Загрузка страницы ---
@@ -1625,30 +1934,6 @@
             showMessage('Файл data.json скачан. Загрузите его в корневую папку репозитория.');
         }
 
-        // --- Поиск по объектам ---
-        function searchObjects(query) {
-            const results = [];
-            if (!pagesData) return results;
-            
-            // Ищем только в 3 корпусе
-            for (let floor in pagesData) {
-                if (pagesData[floor].objects) {
-                    pagesData[floor].objects.forEach(obj => {
-                        if (obj.name.toLowerCase().includes(query.toLowerCase())) {
-                            results.push({
-                                corpus: 3, // Всегда 3 корпус
-                                floor: floor,
-                                name: obj.name,
-                                x: obj.x,
-                                y: obj.y
-                            });
-                        }
-                    });
-                }
-            }
-            return results;
-        }
-
         // --- Обработчики событий для корпусов ---
         corpusButtons.forEach(button => {
             button.addEventListener('click', () => {
@@ -1761,36 +2046,17 @@
 
         // --- Поиск ---
         searchInput.addEventListener('input', function() {
-            const query = this.value.trim();
-            searchResults.innerHTML = '';
-            if (!query) return;
-            
-            const found = searchObjects(query);
-            if (found.length === 0) {
-                const li = document.createElement('li');
-                li.textContent = 'Ничего не найдено';
-                li.style.color = '#888';
-                li.style.padding = '15px';
-                li.style.textAlign = 'center';
-                searchResults.appendChild(li);
-            } else {
-                found.forEach(item => {
-                    const li = document.createElement('li');
-                    li.innerHTML = `<strong>${item.name}</strong><br>
-                                   <small>Корпус ${item.corpus}, Этаж ${item.floor}</small>`;
-                    li.style.cursor = 'pointer';
-                    li.style.padding = '12px';
-                    li.style.borderRadius = '6px';
-                    li.onclick = () => {
-                        loadPage(parseInt(item.corpus), parseInt(item.floor));
-                        setTimeout(() => {
-                            highlightObject(item.name);
-                        }, 300);
-                        searchModal.classList.remove('active');
-                    };
-                    searchResults.appendChild(li);
-                });
-            }
+            performSearch(this.value);
+        });
+
+        clearSearchBtn.addEventListener('click', function() {
+            searchInput.value = '';
+            performSearch('');
+        });
+
+        searchIcon.addEventListener('click', () => {
+            searchModal.classList.add('active');
+            searchInput.focus();
         });
 
         // --- Быстрый доступ ---
@@ -1868,6 +2134,7 @@
         // --- Обработчики для модальных окон ---
         closeSearchModal.addEventListener('click', () => {
             searchModal.classList.remove('active');
+            // Не сбрасываем поиск при закрытии окна, если он активен
         });
 
         closeQuickAccessModal.addEventListener('click', () => {
@@ -1909,7 +2176,30 @@
             routeSteps.style.display = 'none';
         });
 
+        // Обработчики для панели управления маршрутом на странице
+        prevStepBtn.addEventListener('click', goToPrevStep);
         nextStepBtn.addEventListener('click', goToNextStep);
+        endRouteBtn.addEventListener('click', endRoute);
+
+        // Обработка клавиш для навигации по маршруту
+        document.addEventListener('keydown', (e) => {
+            if (!currentRoute) return;
+            
+            switch(e.key) {
+                case 'ArrowLeft':
+                    e.preventDefault();
+                    goToPrevStep();
+                    break;
+                case 'ArrowRight':
+                    e.preventDefault();
+                    goToNextStep();
+                    break;
+                case 'Escape':
+                    e.preventDefault();
+                    endRoute();
+                    break;
+            }
+        });
 
         window.addEventListener('keydown', e => {
             if (e.key === 'Escape') {
