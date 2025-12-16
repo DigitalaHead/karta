@@ -436,7 +436,7 @@
             background: #fff;
             padding: 30px;
             border-radius: 12px;
-            min-width: 300px;
+            min-width: 400px;
             max-width: 90vw;
             max-height: 80vh;
             overflow-y: auto;
@@ -577,6 +577,33 @@
             pointer-events: none;
         }
         
+        /* Стили для выпадающих списков */
+        .select-container {
+            margin: 15px 0;
+        }
+        
+        .select-container label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .select-container select {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            background-color: white;
+            cursor: pointer;
+        }
+        
+        .select-container select:focus {
+            border-color: var(--primary-color);
+            outline: none;
+        }
+        
         /* Адаптация для телефона */
         @media (max-width: 768px) {
             :root {
@@ -702,6 +729,11 @@
             
             #page-text {
                 font-size: 18px;
+            }
+            
+            .modal-content {
+                min-width: 300px;
+                padding: 20px;
             }
         }
         
@@ -842,10 +874,21 @@
             <span class="modal-close" id="closeQuickAccessModal">&times;</span>
             <h2>Быстрый доступ</h2>
             <p style="color:#666;font-size:14px;margin-bottom:15px;">Добавляйте сюда часто посещаемые объекты для быстрого перехода</p>
-            <ul class="quick-access-list" id="quickAccessList"></ul>
-            <div style="margin-top:20px;padding-top:15px;border-top:1px solid #eee;">
-                <p style="color:#666;font-size:14px;">Для добавления объекта в список быстрого доступа нажмите на него правой кнопкой мыши в режиме просмотра</p>
+            
+            <div class="select-container">
+                <label for="addToQuickAccessSelect">Добавить объект в избранное:</label>
+                <select id="addToQuickAccessSelect">
+                    <option value="">Выберите объект...</option>
+                </select>
+                <button id="addToQuickAccessBtn" style="width:100%;padding:10px;margin-top:10px;background:var(--primary-color);color:white;border:none;border-radius:6px;cursor:pointer;">
+                    Добавить в избранное
+                </button>
             </div>
+            
+            <hr style="margin:20px 0;">
+            
+            <h3>Ваше избранное:</h3>
+            <ul class="quick-access-list" id="quickAccessList"></ul>
         </div>
     </div>
 
@@ -854,16 +897,19 @@
         <div class="modal-content">
             <span class="modal-close" id="closeRouteModal">&times;</span>
             <h2>Построение маршрута</h2>
-            <div id="routeStatus" style="padding:15px;background:#f0f8ff;border-radius:6px;margin:15px 0;">
-                <strong>Статус:</strong> <span id="routeStatusText">Выберите начальную точку</span>
+            
+            <div class="select-container">
+                <label for="routeStartSelect">Начальная точка:</label>
+                <select id="routeStartSelect">
+                    <option value="">Выберите начальную точку...</option>
+                </select>
             </div>
             
-            <div id="routeStartInfo" style="display:none;">
-                <p><strong>Начало:</strong> <span id="routeStartName"></span></p>
-            </div>
-            
-            <div id="routeEndInfo" style="display:none;">
-                <p><strong>Конец:</strong> <span id="routeEndName"></span></p>
+            <div class="select-container">
+                <label for="routeEndSelect">Конечная точка:</label>
+                <select id="routeEndSelect">
+                    <option value="">Выберите конечную точку...</option>
+                </select>
             </div>
             
             <div id="routeSteps" class="route-instructions" style="display:none;">
@@ -873,6 +919,7 @@
             
             <div class="route-controls">
                 <button class="route-btn cancel" id="cancelRouteBtn">Отмена</button>
+                <button class="route-btn" id="generateRouteBtn">Построить маршрут</button>
                 <button class="route-btn" id="startRouteBtn" style="display:none;">Начать маршрут</button>
                 <button class="route-btn" id="clearRouteBtn" style="display:none;">Очистить маршрут</button>
                 <button class="route-btn" id="nextStepBtn" style="display:none;">Следующий шаг</button>
@@ -925,7 +972,7 @@
 
     <script>
         // --- Настройка режима администратора ---
-        const isAdmin = false;
+        const isAdmin = true;
 
         // --- DOM элементы ---
         const content = document.getElementById('content');
@@ -953,15 +1000,15 @@
         const searchInput = document.getElementById('searchInput');
         const searchResults = document.getElementById('searchResults');
         const quickAccessList = document.getElementById('quickAccessList');
+        const addToQuickAccessSelect = document.getElementById('addToQuickAccessSelect');
+        const addToQuickAccessBtn = document.getElementById('addToQuickAccessBtn');
+        const routeStartSelect = document.getElementById('routeStartSelect');
+        const routeEndSelect = document.getElementById('routeEndSelect');
+        const generateRouteBtn = document.getElementById('generateRouteBtn');
         const imageContainer = document.getElementById('imageContainer');
         const editMessage = document.getElementById('editMessage');
         const loader = document.getElementById('loader');
         const debugInfo = document.getElementById('debugInfo');
-        const routeStatusText = document.getElementById('routeStatusText');
-        const routeStartInfo = document.getElementById('routeStartInfo');
-        const routeEndInfo = document.getElementById('routeEndInfo');
-        const routeStartName = document.getElementById('routeStartName');
-        const routeEndName = document.getElementById('routeEndName');
         const routeSteps = document.getElementById('routeSteps');
         const routeStepsList = document.getElementById('routeStepsList');
         const cancelRouteBtn = document.getElementById('cancelRouteBtn');
@@ -987,7 +1034,6 @@
         };
 
         // --- Инициализация данных по умолчанию ---
-        // ИЗМЕНЕНИЕ: Для всех этажей 3-го корпуса используем oneNOtext.jpg
         const defaultPagesData = {
             "1": { "text": "Этаж 1", "imageSrc": "images/oneNOtext.jpg", "objects": [] },
             "2": { "text": "Этаж 2", "imageSrc": "images/oneNOtext.jpg", "objects": [] },
@@ -1012,6 +1058,7 @@
         let currentRoute = null;
         let currentStepIndex = 0;
         let quickAccessItems = [];
+        let allObjectsList = [];
 
         // --- Функция показа сообщения ---
         function showMessage(text, type = 'info') {
@@ -1022,6 +1069,58 @@
             setTimeout(() => {
                 editMessage.style.display = 'none';
             }, 5000);
+        }
+
+        // --- Функция получения всех объектов из данных ---
+        function getAllObjects() {
+            const objects = [];
+            if (!pagesData) return objects;
+            
+            for (let floor in pagesData) {
+                if (pagesData[floor].objects && Array.isArray(pagesData[floor].objects)) {
+                    pagesData[floor].objects.forEach(obj => {
+                        objects.push({
+                            name: obj.name,
+                            floor: parseInt(floor),
+                            corpus: 3, // Все объекты только в 3 корпусе
+                            x: obj.x,
+                            y: obj.y
+                        });
+                    });
+                }
+            }
+            
+            // Сортируем по названию
+            objects.sort((a, b) => a.name.localeCompare(b.name));
+            return objects;
+        }
+
+        // --- Функция обновления выпадающих списков ---
+        function updateSelectLists() {
+            allObjectsList = getAllObjects();
+            
+            // Очищаем списки
+            addToQuickAccessSelect.innerHTML = '<option value="">Выберите объект...</option>';
+            routeStartSelect.innerHTML = '<option value="">Выберите начальную точку...</option>';
+            routeEndSelect.innerHTML = '<option value="">Выберите конечную точку...</option>';
+            
+            // Заполняем списки
+            allObjectsList.forEach(obj => {
+                const option1 = document.createElement('option');
+                option1.value = obj.name;
+                option1.textContent = `${obj.name} (Этаж ${obj.floor})`;
+                addToQuickAccessSelect.appendChild(option1);
+                
+                const option2 = document.createElement('option');
+                option2.value = obj.name;
+                option2.textContent = `${obj.name} (Этаж ${obj.floor})`;
+                routeStartSelect.appendChild(option2);
+                
+                const option3 = document.createElement('option');
+                option3.value = obj.name;
+                option3.textContent = `${obj.name} (Этаж ${obj.floor})`;
+                routeEndSelect.appendChild(option3);
+            });
         }
 
         // --- Функция загрузки быстрого доступа из localStorage ---
@@ -1180,24 +1279,10 @@
                         const objectIndex = parseInt(this.dataset.objectId);
                         if (confirm(`Удалить объект "${obj.name}"?`)) {
                             pagesData[currentFloor].objects.splice(objectIndex, 1);
+                            updateSelectLists();
                             renderObjects();
                             showMessage(`Объект "${obj.name}" удален`);
                         }
-                    });
-                } else if (routeMode) {
-                    label.classList.add('route-mode');
-                    label.addEventListener('click', function(e) {
-                        e.stopPropagation();
-                        handleObjectClickForRoute(obj.name, currentCorpus, currentFloor, obj.x, obj.y);
-                    });
-                } else {
-                    // Для обычного режима - правый клик для добавления в быстрый доступ
-                    label.addEventListener('contextmenu', function(e) {
-                        e.preventDefault();
-                        if (confirm(`Добавить "${obj.name}" в быстрый доступ?`)) {
-                            addToQuickAccess(obj.name, currentCorpus, currentFloor);
-                        }
-                        return false;
                     });
                 }
                 
@@ -1288,48 +1373,14 @@
             currentStepIndex = 0;
             routeIcon.classList.remove('route-mode');
             pageImage.classList.remove('route-mode-cursor');
-            routeStartInfo.style.display = 'none';
-            routeEndInfo.style.display = 'none';
             routeSteps.style.display = 'none';
             startRouteBtn.style.display = 'none';
             clearRouteBtn.style.display = 'none';
             nextStepBtn.style.display = 'none';
-            routeStatusText.textContent = 'Выберите начальную точку';
-        }
-
-        // --- Функция обработки клика по объекту для маршрута ---
-        function handleObjectClickForRoute(objectName, corpus, floor, x, y) {
-            if (!routeStart) {
-                // Устанавливаем начальную точку
-                routeStart = {
-                    name: objectName,
-                    corpus: corpus,
-                    floor: floor,
-                    x: x,
-                    y: y
-                };
-                routeStartName.textContent = `${objectName} (Корпус ${corpus}, Этаж ${floor})`;
-                routeStartInfo.style.display = 'block';
-                routeStatusText.textContent = 'Выберите конечную точку';
-                showMessage(`Начальная точка: ${objectName}. Теперь выберите конечную точку.`, 'info');
-            } else if (!routeEnd) {
-                // Устанавливаем конечную точку
-                routeEnd = {
-                    name: objectName,
-                    corpus: corpus,
-                    floor: floor,
-                    x: x,
-                    y: y
-                };
-                routeEndName.textContent = `${objectName} (Корпус ${corpus}, Этаж ${floor})`;
-                routeEndInfo.style.display = 'block';
-                routeStatusText.textContent = 'Маршрут определен. Нажмите "Начать маршрут"';
-                startRouteBtn.style.display = 'inline-block';
-                clearRouteBtn.style.display = 'inline-block';
-                
-                // Генерируем предварительный маршрут
-                generateRoute();
-            }
+            
+            // Сбрасываем выбор в выпадающих списках
+            routeStartSelect.value = '';
+            routeEndSelect.value = '';
         }
 
         // --- Функция генерации маршрута ---
@@ -1390,6 +1441,8 @@
             });
             
             routeSteps.style.display = 'block';
+            startRouteBtn.style.display = 'inline-block';
+            clearRouteBtn.style.display = 'inline-block';
             nextStepBtn.style.display = 'inline-block';
         }
 
@@ -1470,7 +1523,7 @@
                     pageImage.src = pagesData[floor].imageSrc;
                     pageText.textContent = pagesData[floor].text;
                 } else {
-                    // ИЗМЕНЕНИЕ: Для этажей 3-го корпуса всегда используем oneNOtext.jpg
+                    // Для этажей 3-го корпуса всегда используем oneNOtext.jpg
                     pageText.textContent = `Этаж ${floor}`;
                     pageImage.src = 'images/oneNOtext.jpg';
                 }
@@ -1661,6 +1714,7 @@
                 const newData = await loadDataFromServer();
                 if (newData) {
                     pagesData = newData;
+                    updateSelectLists();
                     loadPage(currentCorpus, currentFloor);
                     showMessage('Данные успешно обновлены');
                 }
@@ -1684,7 +1738,6 @@
                     const objectName = name.trim();
                     
                     if (!pagesData[currentFloor]) {
-                        // ИЗМЕНЕНИЕ: При создании нового этажа используем oneNOtext.jpg
                         pagesData[currentFloor] = { text: `Этаж ${currentFloor}`, imageSrc: "images/oneNOtext.jpg", objects: [] };
                     }
                     if (!pagesData[currentFloor].objects) {
@@ -1696,6 +1749,7 @@
                         x: Math.max(0, Math.min(1, x)),
                         y: Math.max(0, Math.min(1, y))
                     });
+                    updateSelectLists();
                     renderObjects();
                     resetEditModes();
                     showMessage(`Объект "${objectName}" добавлен`);
@@ -1745,28 +1799,70 @@
             renderQuickAccessList();
         });
 
+        // Кнопка добавления в избранное
+        addToQuickAccessBtn.addEventListener('click', () => {
+            const selectedValue = addToQuickAccessSelect.value;
+            if (!selectedValue) {
+                showMessage('Выберите объект для добавления в избранное', 'error');
+                return;
+            }
+            
+            // Находим объект в списке
+            const selectedObject = allObjectsList.find(obj => obj.name === selectedValue);
+            if (selectedObject) {
+                addToQuickAccess(selectedObject.name, selectedObject.corpus, selectedObject.floor);
+                addToQuickAccessSelect.value = '';
+            }
+        });
+
         // --- Построение маршрута ---
         routeIcon.addEventListener('click', () => {
-            if (routeMode) {
-                resetRouteMode();
-                renderObjects();
-                showMessage('Режим построения маршрута отменен');
-            } else {
-                routeMode = true;
-                addObjectMode = false;
-                deleteObjectMode = false;
-                pageImage.classList.remove('add-object-cursor');
-                pageImage.classList.add('route-mode-cursor');
-                routeIcon.classList.add('route-mode');
-                addObjectBtn.classList.remove('active');
-                deleteObjectBtn.classList.remove('active');
-                
-                routeModal.classList.add('active');
-                resetRouteMode();
-                routeStatusText.textContent = 'Выберите начальную точку на карте';
-                showMessage('Выберите начальную точку маршрута на карте');
-                renderObjects();
+            routeModal.classList.add('active');
+            resetRouteMode();
+        });
+
+        // Кнопка построения маршрута
+        generateRouteBtn.addEventListener('click', () => {
+            const startValue = routeStartSelect.value;
+            const endValue = routeEndSelect.value;
+            
+            if (!startValue || !endValue) {
+                showMessage('Выберите начальную и конечную точки маршрута', 'error');
+                return;
             }
+            
+            if (startValue === endValue) {
+                showMessage('Начальная и конечная точки не могут совпадать', 'error');
+                return;
+            }
+            
+            // Находим объекты в списке
+            const startObject = allObjectsList.find(obj => obj.name === startValue);
+            const endObject = allObjectsList.find(obj => obj.name === endValue);
+            
+            if (!startObject || !endObject) {
+                showMessage('Объекты не найдены в данных', 'error');
+                return;
+            }
+            
+            routeStart = {
+                name: startObject.name,
+                corpus: startObject.corpus,
+                floor: startObject.floor,
+                x: startObject.x,
+                y: startObject.y
+            };
+            
+            routeEnd = {
+                name: endObject.name,
+                corpus: endObject.corpus,
+                floor: endObject.floor,
+                x: endObject.x,
+                y: endObject.y
+            };
+            
+            generateRoute();
+            showMessage('Маршрут построен. Нажмите "Начать маршрут"', 'info');
         });
 
         // --- Обработчики для модальных окон ---
@@ -1810,11 +1906,6 @@
         clearRouteBtn.addEventListener('click', () => {
             resetRouteMode();
             renderObjects();
-            routeStatusText.textContent = 'Выберите начальную точку';
-            startRouteBtn.style.display = 'none';
-            clearRouteBtn.style.display = 'none';
-            routeStartInfo.style.display = 'none';
-            routeEndInfo.style.display = 'none';
             routeSteps.style.display = 'none';
         });
 
@@ -1856,6 +1947,9 @@
                 debugInfo.innerHTML += '<span style="color: orange;">⚠ Используются данные по умолчанию</span>';
             }
             
+            // Обновляем выпадающие списки
+            updateSelectLists();
+            
             loadPage(3, 1);
         }
 
@@ -1866,6 +1960,7 @@
         function resetAllData() {
             if (confirm('Вы уверены, что хотите сбросить все данные к значениям по умолчанию?')) {
                 pagesData = JSON.parse(JSON.stringify(defaultPagesData));
+                updateSelectLists();
                 loadPage(currentCorpus, currentFloor);
                 showMessage('Все данные сброшены к значениям по умолчанию');
             }
@@ -1886,5 +1981,4 @@
         console.log('Текущий корпус:', currentCorpus, 'Текущий этаж:', currentFloor);
     </script>
 </body>
-
 </html>
